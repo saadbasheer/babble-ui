@@ -52,11 +52,12 @@ export default function RecordingComponent() {
 
       setIsWaveformVisible(true);
       startCountdown();
-    } catch (error) {
-      alert("Microphone access denied or error occurred.");
+    } catch {
+      alert("Microphone access denied or error occurred."); 
       router.push("/");
     }
   };
+
 
   const startCountdown = () => {
     setCountdown(3);
