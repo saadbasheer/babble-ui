@@ -1,10 +1,9 @@
 export default function Home() {
   return (
-    
     <main className="w-screen h-screen flex flex-col items-center justify-center bg-[#2F4858]">
-      <div className="text-white top-5 text-[30px] absolute italic z-2">Babble</div>
+      <div className="text-white top-0 mt-10 text-[30px] absolute italic z-2">Babble</div>
       <div className="w-[1550px] h-[750px] rounded-lg border border-white/30 z-1 absolute"></div>
-      <div className="absolute flex gap-4 z-3 bottom-10 ">
+      <div className="absolute flex gap-4 z-3 bottom-0 mb-20 ">
         <button className="w-[65px] h-[65px] rounded-full bg-[#2F4858] border border-black text-[#FFB684] flex items-center justify-center hover:bg-[#FFB684] hover:text-[#2F4858]">
           <svg
             xmlns="http://www.w3.org/2000/svg"

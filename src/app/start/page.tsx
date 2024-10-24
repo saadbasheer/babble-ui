@@ -7,7 +7,6 @@ export default function StartPage() {
   const [showRecording, setShowRecording] = useState(false);
 
   useEffect(() => {
-    // Short delay to ensure smooth transition
     const timer = setTimeout(() => {
       setShowRecording(true);
     }, 100);
