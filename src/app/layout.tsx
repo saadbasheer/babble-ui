@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Particles from "@/components/Particles";
+import Particles from "@/components/ui/Particles";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Bubble UI",
+  title: "Babble UI",
   description: "Ai powered voice application",
 };
 

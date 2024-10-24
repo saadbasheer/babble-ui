@@ -1,5 +1,5 @@
 "use client";
-import Particles from "@/components/Particles";
+import Particles from "@/components/ui/Particles";
 import RecordingComponent from "@/components/Recording";
 import { useEffect, useState } from "react";
 

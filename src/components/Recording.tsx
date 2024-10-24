@@ -122,30 +122,32 @@ export default function RecordingComponent() {
         )}
 
         {isRecording && !isStopped && (
-          <button
-            className="w-[250px] h-[250px] rounded-full bg-white border text-black text-2xl hover:text-[#FFB684] hover:border-[#FFB684] group relative"
-            onClick={stopRecording}
-          >
-            Stop
-            <span className="absolute inset-0 border-[#FFB684] group-hover:scale-[0.85] transition-transform duration-500"></span>
-          </button>
+          <div className="flex flex-col items-center space-y-20">
+            <button
+              className="relative w-[250px] h-[250px] rounded-full bg-[#ffffff] border text-[#000000] text-2xl flex items-center justify-center hover:text-[#FFB684] hover:border-[#FFB684] overflow-hidden group"
+              onClick={stopRecording}
+            >
+              Stop
+              <span className="absolute w-[250px] h-[250px] rounded-full border border-[#FFB684] scale-100 group-hover:scale-[0.85] transition-transform duration-500 ease-out"></span>
+            </button>
+          </div>
         )}
 
         {isStopped && (
-          <div className="flex space-x-10">
+          <div className="flex flex-row justify-center ml-[200px] items-center space-x-10">
             <button
-              className="w-[250px] h-[250px] rounded-full bg-white border text-black text-3xl hover:text-[#FFB684] hover:border-[#FFB684] relative group"
+              className="relative w-[250px] h-[250px] rounded-full bg-[#ffffff] border text-[#000000] text-3xl flex items-center justify-center overflow-hidden group hover:text-[#FFB684] hover:border-[#FFB684]"
               onClick={finishRecording}
             >
               Done
-              <span className="absolute inset-0 border-[#FFB684] group-hover:scale-[0.85] transition-transform duration-500"></span>
+              <span className="absolute w-[250px] h-[250px] rounded-full border border-[#FFB684] scale-100 group-hover:scale-[0.85] transition-transform duration-500 ease-out"></span>
             </button>
             <button
-              className="w-[150px] h-[150px] rounded-full bg-[#FFB684] text-black text-xl relative group"
+              className="relative w-[150px] h-[150px] rounded-full bg-[#FFB684]  text-[#000000] text-xl flex items-center justify-center overflow-hidden group"
               onClick={resumeRecording}
             >
               Resume
-              <span className="absolute inset-0 border-black group-hover:scale-[0.85] transition-transform duration-500"></span>
+              <span className="absolute w-[150px] h-[150px] rounded-full border border-black scale-100 group-hover:scale-[0.85] transition-transform duration-500 ease-out"></span>
             </button>
           </div>
         )}
