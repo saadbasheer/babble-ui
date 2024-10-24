@@ -5,45 +5,32 @@ import Waveform from "./Waveform";
 
 export default function RecordingComponent() {
   const router = useRouter();
-  const [countdown, setCountdown] = useState<number | null>(3); // Start with 3 for countdown
+  const [countdown, setCountdown] = useState<number | null>(3);
   const [isRecording, setIsRecording] = useState(false);
   const [isStopped, setIsStopped] = useState(false);
   const [isWaveformVisible, setIsWaveformVisible] = useState(false);
-  const [isWaveformReceding, setIsWaveformReceding] = useState(false);
   const [audioData, setAudioData] = useState<number[]>(new Array(64).fill(0));
 
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number>();
-  const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const isAnalyzing = useRef<boolean>(false);
 
-  // Start the recording process and countdown immediately on component mount
   useEffect(() => {
     startRecordingProcess();
   }, []);
 
   useEffect(() => {
-    // Effect to handle analysis state changes
-    if (isRecording && analyserRef.current && !isAnalyzing.current) {
-      isAnalyzing.current = true;
-      analyzeAudio();
-    } else if (!isRecording) {
-      isAnalyzing.current = false;
-    }
+    if (isRecording) analyzeAudio();
+    else if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
   }, [isRecording]);
 
   const analyzeAudio = () => {
-    if (!analyserRef.current || !isRecording) {
-      isAnalyzing.current = false;
-      return;
-    }
-
+    if (!analyserRef.current) return;
     const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
     analyserRef.current.getByteFrequencyData(dataArray);
-    const normalizedData = Array.from(dataArray).map((value) => value / 255);
-    setAudioData(normalizedData);
+    setAudioData(Array.from(dataArray).map((value) => value / 255));
     animationFrameRef.current = requestAnimationFrame(analyzeAudio);
   };
 
@@ -62,37 +49,25 @@ export default function RecordingComponent() {
 
       audioContextRef.current = audioContext;
       analyserRef.current = analyser;
-      sourceRef.current = source;
 
       setIsWaveformVisible(true);
-      startCountdown(); // Start the countdown immediately
+      startCountdown();
     } catch (error) {
-      console.error("Error in startRecordingProcess:", error);
       alert("Microphone access denied or error occurred.");
       router.push("/");
     }
   };
 
-  const resumeRecording = () => {
-    console.log("Resuming recording");
-    setIsRecording(true);
-    setIsStopped(false);
-    setIsWaveformVisible(true);
-    setIsWaveformReceding(false);
-  };
-
   const startCountdown = () => {
-    setCountdown(3); // Start from 3
+    setCountdown(3);
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
         if (prev === 1) {
-          clearInterval(countdownInterval); // Clear the interval when it reaches 1
-          console.log("Countdown complete, starting recording");
+          clearInterval(countdownInterval);
           setIsRecording(true);
-          setIsStopped(false);
-          return null; // Reset countdown
+          return null;
         }
-        return prev !== null ? prev - 1 : prev; // Decrement if not null
+        return prev ? prev - 1 : prev;
       });
     }, 1000);
   };
@@ -100,107 +75,92 @@ export default function RecordingComponent() {
   const stopRecording = () => {
     setIsRecording(false);
     setIsStopped(true);
-    setIsWaveformReceding(true);
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-  };
-  const deleteRecording = () => {
-    console.log("Deleting recording");
-
-    setIsRecording(false);
-
-    setIsStopped(false);
-    setIsWaveformVisible(false);
-    setIsWaveformReceding(false);
-    router.push("/");
   };
 
   const finishRecording = () => {
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close();
-    }
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-    }
-
-    setIsRecording(false);
-    setIsStopped(false);
-    setIsWaveformVisible(false);
-    setIsWaveformReceding(false);
+    stopAudio();
     router.push("/");
   };
 
+  const deleteRecording = () => {
+    stopAudio();
+    setIsStopped(false);
+    setIsWaveformVisible(false);
+    router.push("/");
+  };
+
+  const resumeRecording = () => {
+    setIsRecording(true);
+    setIsStopped(false);
+  };
+
+  const stopAudio = () => {
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    audioContextRef.current?.close();
+    if (animationFrameRef.current)
+      cancelAnimationFrame(animationFrameRef.current);
+  };
+
   return (
-    <div className="relative flex flex-col items-center justify-center h-screen z-10 ">
-      <div
-        className={`absolute inset-0 z-5 transition-opacity duration-1000 ${
-          isWaveformVisible ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <Waveform
-          isRecording={isRecording}
-          countdown={countdown}
-          isReceding={isWaveformReceding}
-          audioData={audioData}
-        />
-      </div>
+    <div className="relative flex flex-col items-center justify-center h-screen z-10">
+      {isWaveformVisible && (
+        <div className="absolute inset-0 z-5 transition-opacity duration-1000">
+          <Waveform
+            isRecording={isRecording}
+            countdown={countdown}
+            audioData={audioData}
+          />
+        </div>
+      )}
 
       <div className="relative z-10 flex flex-col items-center justify-center space-y-6">
         {countdown !== null && (
-          <div className="w-[250px] h-[250px] rounded-full bg-[#ffffff] border text-[#000000] text-3xl flex items-center justify-center">
+          <div className="w-[250px] h-[250px] rounded-full bg-white border text-black text-3xl flex items-center justify-center">
             {countdown}
           </div>
         )}
 
         {isRecording && !isStopped && (
-          <div className="flex flex-col items-center space-y-20">
-            <button
-              className="relative w-[250px] h-[250px] rounded-full bg-[#ffffff] border text-[#000000] text-2xl flex items-center justify-center hover:text-[#FFB684] hover:border-[#FFB684] overflow-hidden group"
-              onClick={stopRecording}
-            >
-              Stop
-              <span className="absolute w-[250px] h-[250px] rounded-full border border-[#FFB684] scale-100 group-hover:scale-[0.85] transition-transform duration-500 ease-out"></span>
-            </button>
-          </div>
+          <button
+            className="w-[250px] h-[250px] rounded-full bg-white border text-black text-2xl hover:text-[#FFB684] hover:border-[#FFB684] group relative"
+            onClick={stopRecording}
+          >
+            Stop
+            <span className="absolute inset-0 border-[#FFB684] group-hover:scale-[0.85] transition-transform duration-500"></span>
+          </button>
         )}
 
         {isStopped && (
-          <div className="flex flex-row justify-center ml-[200px] items-center space-x-10">
+          <div className="flex space-x-10">
             <button
-              className="relative w-[250px] h-[250px] rounded-full bg-[#ffffff] border text-[#000000] text-3xl flex items-center justify-center overflow-hidden group hover:text-[#FFB684] hover:border-[#FFB684]"
+              className="w-[250px] h-[250px] rounded-full bg-white border text-black text-3xl hover:text-[#FFB684] hover:border-[#FFB684] relative group"
               onClick={finishRecording}
             >
               Done
-              <span className="absolute w-[250px] h-[250px] rounded-full border border-[#FFB684] scale-100 group-hover:scale-[0.85] transition-transform duration-500 ease-out"></span>
+              <span className="absolute inset-0 border-[#FFB684] group-hover:scale-[0.85] transition-transform duration-500"></span>
             </button>
             <button
-              className="relative w-[150px] h-[150px] rounded-full bg-[#FFB684]  text-[#000000] text-xl flex items-center justify-center overflow-hidden group"
+              className="w-[150px] h-[150px] rounded-full bg-[#FFB684] text-black text-xl relative group"
               onClick={resumeRecording}
             >
               Resume
-              <span className="absolute w-[150px] h-[150px] rounded-full border border-black scale-100 group-hover:scale-[0.85] transition-transform duration-500 ease-out"></span>
+              <span className="absolute inset-0 border-black group-hover:scale-[0.85] transition-transform duration-500"></span>
             </button>
           </div>
         )}
 
         {(isRecording || isStopped) && (
           <button
-            className="relative text-[#FF9595] w-[100px] h-[100px]   rounded-full bg-[#ffffff] group overflow-hidden  border hover:border-[#2F4858]  hover:bg-[#FFB684] hover:text-[#2F4858]"
+            className="w-[100px] h-[100px] rounded-full bg-white text-[#FF9595] border hover:border-[#2F4858] hover:bg-[#FFB684] hover:text-[#2F4858]"
             onClick={deleteRecording}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="20"
-              height="20"
+              className="w-6 h-6 mx-auto"
               fill="currentColor"
               viewBox="0 0 256 256"
-              className="w-6 h-6  ml-9"
             >
-              <path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path>
+              <path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z" />
             </svg>
           </button>
         )}
